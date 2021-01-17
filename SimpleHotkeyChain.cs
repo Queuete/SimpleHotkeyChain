@@ -13,13 +13,7 @@ namespace SimpleHotkeyChain
 {
     public class SimpleHotkeyChain : BaseSettingsPlugin<SimpleHotkeyChainSettings>
     {
-
-        public override Job Tick()
-        {
-            return GameController.MultiThreadManager.AddJob(TickLogic, nameof(SimpleHotkeyChain));
-        }
-
-        private void TickLogic()
+        public override void Render()
         {
             if (Settings.DisableWhenChatOpen && GameController.IngameState.IngameUi.ChatBox.IsVisible) return;
 
@@ -32,7 +26,6 @@ namespace SimpleHotkeyChain
                 }
             }
         }
-
         public void RunHotkeyChain(HotkeyChain hotkeyChain)
         {
             Thread.Sleep(int.Parse(hotkeyChain.Trigger.WaitAfterInMs.Value));
