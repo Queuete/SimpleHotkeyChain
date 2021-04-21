@@ -1,12 +1,7 @@
 ﻿using ExileCore;
-using ImGuiNET;
+using ExileCore.Shared;
 using SimpleHotkeyChain.SettingsModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections;
 using System.Windows.Forms;
 
 namespace SimpleHotkeyChain
@@ -17,43 +12,51 @@ namespace SimpleHotkeyChain
         {
             if (Settings.DisableWhenChatOpen && GameController.IngameState.IngameUi.ChatBox.IsVisible) return;
 
-            foreach (var hotkeyChain in Settings.HotkeyChains)
+            var coroutineWorker = new Coroutine(RunHotkeyChains(), this, "SimpleHotkeyChain.RunHotkeyChains");
+            Core.ParallelRunner.Run(coroutineWorker);
+        }
+
+        private IEnumerator RunHotkeyChains()
+        {
+            foreach(var hotkeyChain in Settings.HotkeyChains)
             {
                 if (hotkeyChain.Enable && Input.GetKeyState(hotkeyChain.Trigger?.Key))
                 {
                     Input.KeyUp(hotkeyChain.Trigger?.Key);
-                    Task.Run(() => RunHotkeyChain(hotkeyChain));
+                    yield return RunHotkeyChain(hotkeyChain);
                 }
             }
         }
-        public void RunHotkeyChain(HotkeyChain hotkeyChain)
+
+        private IEnumerator RunHotkeyChain(HotkeyChain hotkeyChain)
         {
-            Thread.Sleep(int.Parse(hotkeyChain.Trigger.WaitAfterInMs.Value));
+            yield return new WaitTime(int.Parse(hotkeyChain.Trigger.WaitAfterInMs.Value));
             foreach (var hotkey in hotkeyChain.Chain)
             {
-                KeyPress(hotkey.Key, hotkey.ControlModifier.Value);
-                Thread.Sleep(int.Parse(hotkey.WaitAfterInMs.Value));
+                yield return KeyPress(hotkey.Key, hotkey.ControlModifier.Value);
+                var waitTime = int.Parse(hotkey.WaitAfterInMs.Value);
+                if (waitTime > 0) yield return new WaitTime(waitTime);
             }
         }
 
-        private void KeyPress(Keys key, bool ControlModifier)
+        private IEnumerator KeyPress(Keys key, bool ControlModifier)
         {
             if (ControlModifier)
             {
                 Input.KeyDown(Keys.LControlKey);
-                KeyPress(key);
+                yield return KeyPress(key);
                 Input.KeyUp(Keys.LControlKey);
             }
             else
             {
-                KeyPress(key);
+                yield return KeyPress(key);
             }
         }
 
-        private void KeyPress(Keys key)
+        private IEnumerator KeyPress(Keys key)
         {
             Input.KeyDown(key);
-            Thread.Sleep(3);
+            yield return new WaitTime(0);
             Input.KeyUp(key);
         }
 
