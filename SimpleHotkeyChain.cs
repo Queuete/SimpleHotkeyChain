@@ -10,10 +10,10 @@ namespace SimpleHotkeyChain
     {
         public override void Render()
         {
-            if (Settings.DisableWhenChatOpen && GameController.IngameState.IngameUi.ChatBox.IsVisible) return;
+            if (Settings.DisableWhenChatOpen && GameController.IngameState.IngameUi.ChatBoxRoot.IsVisible) return;
 
             var coroutineWorker = new Coroutine(RunHotkeyChains(), this, "SimpleHotkeyChain.RunHotkeyChains");
-            Core.ParallelRunner.Run(coroutineWorker);
+            Core.MainRunner.Run(coroutineWorker);
         }
 
         private IEnumerator RunHotkeyChains()
